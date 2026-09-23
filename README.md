@@ -307,6 +307,17 @@ The tested S3 receiver MAC was:
 DC:B4:D9:39:33:C0
 ```
 
+## Dedicated wireless-limit firmware
+
+To avoid accidentally flashing the wrong node identity, HOME and END now also have dedicated sketches:
+
+```text
+src/wireless_limits/home_limit/home_limit.ino  -> Node ID 1 / HOME
+src/wireless_limits/end_limit/end_limit.ino    -> Node ID 2 / END
+```
+
+Both use the same receiver MAC, GPIO2 switch input, event-triggered transmission, 5-second heartbeat, Bluetooth disable, and reduced Wi-Fi transmit power. The node identity is fixed in each sketch, so no manual ID edit is required before flashing.
+
 ## Wireless-node battery strategy
 
 The first diagnostic firmware transmitted approximately every 20 ms. That was responsive but wasteful on battery.
@@ -350,8 +361,13 @@ Rowing-Machine/
     │   └── main_controller.ino
     ├── main_controller_wired_limits/
     │   └── main_controller_wired_limits.ino
-    └── wireless_limit/
-        └── wireless_limit.ino
+    ├── wireless_limit/
+    │   └── wireless_limit.ino
+    └── wireless_limits/
+        ├── home_limit/
+        │   └── home_limit.ino
+        └── end_limit/
+            └── end_limit.ino
 ```
 
 ## Firmware variants

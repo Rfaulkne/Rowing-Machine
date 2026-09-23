@@ -271,9 +271,32 @@ Rowing-Machine/
 └── src/
     ├── main_controller/
     │   └── main_controller.ino
+    ├── main_controller_wired_limits/
+    │   └── main_controller_wired_limits.ino
     └── wireless_limit/
         └── wireless_limit.ino
 ```
+
+## Firmware variants
+
+### Wireless limits — current architecture
+
+`src/main_controller/main_controller.ino`
+
+Uses ESP-NOW packets from the two battery-powered XIAO ESP32-C3 limit nodes.
+
+### Wired limits — original architecture
+
+`src/main_controller_wired_limits/main_controller_wired_limits.ino`
+
+Uses the original direct S3 limit inputs:
+
+```text
+HOME -> GPIO43
+END  -> GPIO8
+```
+
+The wired switches use `INPUT_PULLUP` and are treated as active LOW. This version does not initialize ESP-NOW; it uses `WIFI_AP` only for the browser interface. The calibration, AUTO, MANUAL and web-control structure is otherwise kept aligned with the documented controller.
 
 ## Current status
 

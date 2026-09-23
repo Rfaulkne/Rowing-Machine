@@ -167,29 +167,95 @@ Filtering and a deadband were added to reduce target hunting caused by ADC noise
 
 ## Wi-Fi browser control
 
-The S3 hosts a local access point:
+The XIAO ESP32-S3 creates its own local Wi-Fi network and hosts the control page directly. No external router or Internet connection is required.
 
-```cpp
-const char* AP_SSID = "RowingController";
-const char* AP_PASSWORD = "12345678";
-```
-
-Default access:
+### Connection details
 
 ```text
-SSID: RowingController
-Password: 12345678
-URL: http://192.168.4.1
+Wi-Fi network / SSID: RowingController
+Password:             12345678
+Controller address:   192.168.4.1
+Browser URL:          http://192.168.4.1
 ```
 
-Controls:
+### Connecting from a phone, tablet or computer
 
-- Speed 1-5
-- STOP
-- RESUME
-- HOME, currently meaning move to center position
+1. Power the rowing-machine controller.
+2. Open the Wi-Fi settings on the phone, tablet or computer.
+3. Select **RowingController**.
+4. Enter the password **12345678**.
+5. The device may report that this Wi-Fi network has **no Internet connection**. This is expected; remain connected to it.
+6. Open a web browser.
+7. Enter **http://192.168.4.1** in the browser address bar.
+8. The Rowing Controller web interface should appear.
 
-The intended combined radio setup is `WIFI_AP_STA` so the S3 can host the browser UI while also receiving ESP-NOW packets.
+The address is the ESP32 SoftAP's local address. The browser communicates directly with the S3 rather than through the Internet.
+
+### Web controls
+
+- **Speed 1-5** — selects the automatic sweep speed.
+- **STOP** — immediately stops the current automatic movement and disables automatic running.
+- **RESUME** — re-enables automatic running.
+- **HOME / CENTER** — disables automatic running and commands the carriage to the calibrated midpoint, `endPos / 2`.
+
+### Firmware setup
+
+The access point is defined by:
+
+```cpp
+const char* AP_SSID     = "RowingController";
+const char* AP_PASSWORD = "12345678";
+
+WebServer server(80);
+```
+
+The wireless-limit firmware uses:
+
+```cpp
+WiFi.mode(WIFI_AP_STA);
+WiFi.softAP(AP_SSID, AP_PASSWORD);
+```
+
+`WIFI_AP_STA` is used because the main S3 must simultaneously:
+
+- host the local Wi-Fi control network; and
+- operate ESP-NOW to receive the battery-powered HOME and END limit nodes.
+
+The original wired-limit firmware does not require ESP-NOW and therefore uses:
+
+```cpp
+WiFi.mode(WIFI_AP);
+WiFi.softAP(AP_SSID, AP_PASSWORD);
+```
+
+Both firmware variants expose the browser interface at **http://192.168.4.1**.
+
+### Web-server routes
+
+```cpp
+server.on("/", handleRoot);
+server.on("/speed", handleSpeed);
+server.on("/stop", handleStop);
+server.on("/resume", handleResume);
+server.on("/home", handleHome);
+server.begin();
+```
+
+The main loop must continuously service browser requests:
+
+```cpp
+server.handleClient();
+```
+
+### Troubleshooting
+
+If the page does not open:
+
+- Confirm the phone/computer is still connected to **RowingController** rather than automatically switching back to another Wi-Fi network.
+- Enter **http://192.168.4.1** explicitly; HTTPS is not used by the controller.
+- Ignore the operating system's **No Internet** warning for this network.
+- Power-cycle the S3 if the `RowingController` SSID is not visible.
+- For the wireless-limit firmware, if the web interface works but ESP-NOW limits stop responding, troubleshoot Wi-Fi/ESP-NOW coexistence separately rather than changing the calibration logic.
 
 ## Wireless HOME / END switches
 

@@ -263,10 +263,21 @@ Each endpoint has a XIAO ESP32-C3 and mechanical microswitch.
 
 ### Switch wiring
 
+The mechanical microswitch has three terminals: **C / COM (common)**, **NC (normally closed)** and **NO / O (normally open)**.
+
+For the wireless limit nodes, the tested wiring is:
+
 ```text
-COM -> GND
-NC  -> GPIO2
+C / COM -> GND
+NC      -> GPIO2 signal input on the XIAO ESP32-C3
+NO / O  -> not connected
 ```
+
+So, viewed functionally:
+
+- **C / COM = ground**
+- **NC = signal**
+- **NO / O = unused**
 
 The C3 uses:
 

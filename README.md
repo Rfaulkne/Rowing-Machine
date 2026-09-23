@@ -397,3 +397,6 @@ Confirmed during development:
 - Real battery-current measurements.
 - S3-side heartbeat timeout / loss-of-node monitoring.
 - Final electrical schematic and enclosure photos.
+
+- [Print Schematic.pdf](https://github.com/user-attachments/files/32558452/Print.Schematic.pdf)
+

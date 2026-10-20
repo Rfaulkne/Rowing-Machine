@@ -416,3 +416,40 @@ Confirmed during development:
 
 - [Print Schematic.pdf](https://github.com/user-attachments/files/32558452/Print.Schematic.pdf)
 
+
+
+## Tested wired USB single-stroke controller (20 October 2026)
+
+**Recommended tested configuration for the robot-leg carriage:** [`src/main_controller_usb_single_stroke/main_controller_usb_single_stroke.ino`](src/main_controller_usb_single_stroke/main_controller_usb_single_stroke.ino).
+
+This is a **separate, newer wired-limit, USB-controlled single-stroke variant**. Earlier AUTO/MANUAL sweep and ESP-NOW variants above are preserved for reference; their descriptions do **not** describe the current single-stroke setup. The user confirmed homing and test START/RESET motion working, including commands targeting 100, 250 and 500 mm/s; speed and distance appear accurate but have not been independently instrumented.
+
+### Tested hardware and settings
+
+- Seeed XIAO ESP32-S3, TB6600 (1/4 microsteps; 800 pulses/rev), NEMA17, 24 V motor supply.
+- Wired HOME on GPIO43 and END on GPIO8; STEP on GPIO4 and DIR on GPIO5; switch inputs are active HIGH with COM+NC to GND (`LIMIT_ACTIVE_LOW = false`).
+- Positive step commands move **toward END**; negative toward HOME.
+- `STEPS_PER_MM = 12.106537f` (empirical calibration after a 100-mm command yielded 118 mm using the previous 14.285714 steps/mm; provisional, verify physically).
+- `SEARCH_LIMIT_STEPS = 10000` (~826 mm at the provisional calibration; **not verified as mechanically safe**).
+- `HOME_BACKOFF_STEPS = 300`; **the attached tested sketch also sets** `END_BACKOFF_STEPS = 300` (do not confuse with earlier conversational values of 150).
+- `CAL_SPEED_HZ = 300`, `BACKOFF_SPEED_HZ = 200`, `RETURN_SPEED_HZ = 500`.
+- `MAX_COMMAND_MM_S = 500`, `STROKE_ACCEL_STEPS_S2 = 50000`, `CAL_ACCEL_STEPS_S2 = 17000`, `MAX_SPEED_HZ = 17000`.
+- Motor remains stationary at boot; **calibration only starts after USB `CAL`**; single-touch HOME and END with stop, settle, and backoff, then automatically returns to start; no automatic sweep.
+
+### USB operation (Arduino Serial Monitor: 115200, newline)
+
+```text
+STATUS
+CAL
+STATUS
+STARTMM 100 30
+RESET
+STARTMM 250 100
+RESET
+STARTMM 500 200
+RESET
+```
+
+Wait for `EVENT ready_at_start` after `CAL` and `EVENT stroke_complete` before `RESET`. The `STARTMM` and `RUNMM` syntax is `<speed in mm/s> <positive distance in mm>`, and the command must fit the measured calibrated rail with braking clearance. `RUNMM` requires periodic `HB` at intervals shorter than 500 ms; `STARTMM` does not. `MOVE` and `START` also accept raw steps/steps-per-second. `STOP` causes a fault and requires recalibration with `CAL`. Wi-Fi SSID `RowingController`, password `12345678`, URL `http://192.168.4.1` remains available for software STOP only in this variant.
+
+**Safety:** Verify released/pressed limit readings before powering the motor, check direction and physical clearance, and use an independent motor-power cutoff. The 10,000-step search is a software travel cap, not a collision-prevention guarantee. At high velocity the code cannot measure physical carriage position or detect step loss without feedback.
